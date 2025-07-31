@@ -1,0 +1,66 @@
+'''purpose, author,'''
+import tkinter as tk
+from tkinter import messagebox
+import json
+from tkinter import ttk
+from PIL import Image, ImageTk
+import time
+
+import tkinter as tk
+from tkinter import messagebox
+
+# Set the title and size of the window
+root = tk.Tk()
+root.title("General Knowledge Quiz App")
+root.geometry("500x300")
+
+
+# Apply to label and keep a reference
+bg_label = tk.Label(root, image=bg_photo)
+bg_label.image = bg_photo
+bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+
+def submit():
+    name = name_entry.get()
+    level = level_var.get()
+    
+    if not name:
+        messagebox.showwarning("Input Error", "Please enter your name!")
+        return
+    if not level:
+        messagebox.showwarning("Input Error", "Please select a level!")
+        return
+    
+    messagebox.showinfo("Welcome", f"Hello {name}! You selected level: {level}")
+
+def load_questions(filename):
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except:
+        return []
+    
+#Enter user's name
+tk.Label(root, text="Enter your name:").pack(pady=(30, 20))
+name_entry = tk.Entry(root)
+name_entry.pack(pady=10)  
+
+#Selecting level of quiz
+level_var = tk.StringVar()
+levels = ["Easy", "Medium", "Hard"]
+branch_dropdown = ttk.Combobox(root, textvariable=level_var, values=levels, state="readonly")
+branch_dropdown.pack(pady=20)  
+
+submit_btn = tk.Button(root, text="Start Quiz", command=submit)
+submit_btn.pack(pady=(40, 50)) 
+
+
+# Load questions from a JSON file
+questions = load_questions("questions.json")
+
+
+# Function to display questions and handle quiz logic
+root.mainloop()
+
+
