@@ -1,0 +1,43 @@
+def user_interface(self):
+        #Clear main menu window
+        for widget in self.root.winfo_children():
+            if not isinstance(widget, tk.Label) or not hasattr(widget, 'image'):
+                widget.destroy()
+
+        #Main quiz frame
+        self.quiz_frame = tk.Frame(self.root, bg='white', padx=20, pady=20)
+        self.quiz_frame.place(relx=0.5, rely=0.5, anchor='center')
+
+        #Score   
+        self.score_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 10, "bold"))
+        self.score_label.pack()
+        
+        #Timer
+        self.timer_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 12, "bold"), fg='red')
+        self.timer_label.pack(pady=(0, 10)
+        
+        #Answer buttins
+        self.answer_var = tk.StringVar()
+        self.option_buttons = []
+        for _ in range(4):
+            btn = tk.Radiobutton(self.options_frame, text="", variable=self.answer_var, value="", font=("Arial", 10), wraplength=400, bg='white', anchor='w')
+            btn.pack(anchor='w', pady=2)
+            self.option_buttons.append(btn)
+        #Submit button
+        self.submit_button = tk.Button(master, text="Submit Answer", command=self.check_answer)
+        self.submit_button.pack(pady=5)
+
+        #Next button
+        self.next_button = tk.Button(master, text="Next Question", command=self.next_question)
+        self.next_button.pack(pady=5)
+
+        #Skip button
+        self.skip_button = tk.Button(master, text="Skip", command=self.skip_question)
+        self.skip_button.pack(pady=5)
+
+
+
+        
+
+
+
