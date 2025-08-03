@@ -1,0 +1,88 @@
+'''purpose, author,'''
+import tkinter as tk
+from tkinter import messagebox
+from PIL import Image, ImageTk
+import json
+from tkinter import ttk
+import re
+import threading
+import time
+
+#Quiz app view window
+class QuizApp:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("General Knowledge Quiz App")
+        self.root.geometry("500x300")
+
+        self.player_name = ""
+        self.current_category = ""
+        self.questions = []
+        self.current_question = 0
+        self.score = 0
+        self.start_time = 0
+        self.timer_running = False
+        self.time_left = 0
+        
+    def background_image(self):
+    #Insert background image
+        bg_image = Image.open("C:/Users/prasa/OneDrive/Desktop/Baduge, Sandy - 13DIT Project 91906/bg3.png")
+        bg_image = bg_image.resize((600, 400))
+        bg_photo = ImageTk.PhotoImage(bg_image)
+    # Apply to label and keep a reference
+        bg_label = tk.Label(self.root, image=bg_photo)
+        bg_label.image = bg_photo
+        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+    def main_menu(self):
+        main_frame = tk.Frame(self.root, bg='white', padx=20, pady=20)
+        main_frame.place(relx=0.5, rely=0.5, anchor='center')
+        #Title
+        title_label = tk.Label(main_frame, text="General Knowledge Quiz", font=("Arial", 16, "bold"), bg='white')
+        title_label.pack(pady=(0, 20))
+
+        #Name entry of user
+        tk.Label(main_frame, text="Enter your name:", bg='white').pack(pady=(0, 5))
+        self.name_entry = tk.Entry(main_frame, width=16, validate='key')
+        self.name_entry.pack(pady=(0, 15))
+
+        #Category selection
+        tk.Label(main_frame, text="Select difficulty level:", bg='blue').pack(pady=(0, 5))
+        self.category_var = tk.StringVar()
+        categories = ["Geography", "Arts"]
+        self.level_dropdown = ttk.Combobox(main_frame, textvariable=self.level_var, 
+        values=levels, state="readonly", width=22)
+        self.level_dropdown.pack(pady=(0, 20))
+        self.level_dropdown.current(0)
+
+        #Start button
+        start_button = tk.Button(main_frame, text="Start Quiz", command=self.start_quiz, bg='green', fg='white')
+        start_button.pack()
+
+
+    def start_quiz():
+        name = self.name_entry.get().strip() 
+        category = self.category_var.get()
+
+        if not name:
+            messagebox.showwarning("Error! Name cannot be blank", "Please enter your name!")
+            return
+        if len(name) <2: 
+            messagebox.showwarning("Error!","Name must be at least 2 characters long!")
+            return
+        if len(name)>16:
+            messagebox.showwarning("Error!","Name must be shorter than 16 characters!")
+            return
+        if not category:
+            messagebox.showwarning("Error!", "Please select a category")
+            return
+
+        #Set variables to quiz inputs    
+        self.player_name = name
+        self.current_category = category
+   
+    def load_questions(self):
+        '''Load questions based on the category user selects'''
+        filename = f"questions/{self.current_category}.json"
+        with open(filename, "r", encoding="utf-8") as file:
+            self.questions = json.load(file)
