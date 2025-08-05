@@ -1,0 +1,276 @@
+'''This quiz application allows users, (specifically high-school students) to learn new fun facts and test their knowledge
+on history and geogragphy!
+ Author- Sandy Baduge'''
+
+#import all functions for python and tkinter
+import tkinter as tk
+from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
+import json
+
+
+# The Instructions window for the user.
+def show_instructions(root):
+    # Create a new window for instructions
+    instruction_window = tk.Toplevel(root)
+    instruction_window.title("Game Instructions")
+    instruction_window.geometry("600x500")
+    instruction_window.resizable(False, False)
+    # Instruction text to be displayed.
+    instructions_text = (
+        "Welcome to the General Knowledge Quiz!\n\n"
+        "Instructions:\n"
+        "1. Enter your name in the provided field.\n"
+        "2. Select a topic, either 'Science' or 'History' from the dropdown menu.\n"
+        "3. Click 'Start Quiz' to begin.\n"
+        "4. Answer the questions by selecting the correct option.\n"
+        "5. You can skip a question if you're unsure by clicking 'Skip Question'.\n"
+        "6. After answering all questions, your score will be displayed.\n"
+        "7. You can retry the quiz by clicking 'Retry Quiz'.\n"
+        "8. Enjoy learning new facts and testing your knowledge!\n\n"
+    )
+    # Add the instructions to the window.
+    instruction_label = tk.Label(instruction_window, text=instructions_text, font=("Helvetica", 12), fg="white", bg="black", justify="left", wraplength=48)
+    instruction_label.pack(pady=10, padx=10)
+    # Function to handle closing the window and starting the game.
+    def hide_instructions():
+        instruction_window.destroy()
+    # Button to close instructions and start the game.
+        start_game_button = tk.Button(instruction_window, text="Start Game", fg="white",bg="black", command=hide_instructions)
+        start_game_button.pack(pady=20)
+    # Keep the window open until the user closes it.
+        instruction_window.mainloop()
+        
+#Quiz app view window
+class QuizApp:
+    def __init__(self,root):
+        self.root = root
+        self.root.title("General Knowledge Quiz App")
+        self.root.geometry("500x300")
+
+        self.player_name = ""
+        self.current_category = ""
+        self.questions = []
+        self.original_questions = self.questions.copy()
+        self.current_question = 0
+        self.score = 0
+        self.start_time = 0
+        self.timer_running = False
+        self.time_left = 0
+        self.attempted_questions = []
+        self.skipped_questions = []
+        
+    def background_image(self):
+    #Insert background image
+        bg_image = Image.open("C:/Users/prasa/OneDrive/Desktop/Baduge, Sandy - 13DIT Project 91906/bg3.png")
+        bg_image = bg_image.resize((600, 400))
+        self.bg_photo = ImageTk.PhotoImage(bg_image, master=self.root)
+        
+        self.bg_label = tk.Label(self.root, image=self.bg_photo)
+        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+    def main_menu(self):
+        main_frame = tk.Frame(self.root, bg='white', padx=20, pady=20)
+        main_frame.place(relx=0.5, rely=0.5, anchor='center')
+        #Title
+        title_label = tk.Label(main_frame, text="Trivia Quiz", font=("Arial", 16, "bold"), bg='white')
+        title_label.pack(pady=(0, 20))
+
+        #Name entry of user
+        tk.Label(main_frame, text="Enter your name:", bg='white').pack(pady=(0, 5))
+        self.name_entry = tk.Entry(main_frame, width=16, validate='key')
+        self.name_entry.pack(pady=(0, 15))
+
+        #Category selection
+        tk.Label(main_frame, text="Select category:", bg='light blue').pack(pady=(0, 5))
+        self.category_var = tk.StringVar()
+        category = ["Science", "History"]
+        self.category_dropdown = ttk.Combobox(main_frame, textvariable=self.category_var, values= category, state="readonly", width=22)
+        self.category_dropdown.pack(pady=(0, 20))
+        self.category_dropdown.current(0)
+
+        #Start button
+        start_button = tk.Button(main_frame, text="Start Quiz", command=self.start_quiz)
+        start_button.pack()
+
+    def start_quiz(self):
+        #validate user input
+        name = self.name_entry.get().strip() 
+        category = self.category_var.get()
+    
+        if not name:
+            messagebox.showwarning("Error! Name cannot be blank", "Please enter your name!")
+            return
+        if len(name) <2: 
+            messagebox.showwarning("Error!","Name must be at least 2 characters long!")
+            return
+        if len(name)>16:
+            messagebox.showwarning("Error!","Name must be shorter than 16 characters!")
+            return
+        if not category:
+            messagebox.showwarning("Error!", "Please select a category")
+            return
+
+        #Set variables    
+        self.player_name = name
+        self.current_category = category
+        self.load_questions()
+        self.score = 0
+        self.attempted_questions = []
+        self.skipped_questions = []
+        self.questions = self.original_questions.copy()
+        self.next_question()
+        self.user_interface()
+
+    def next_question(self):
+        #Check if there are any unanswered questions
+        unanswered = [q for q in self.questions if q not in self.attempted_questions]
+        if not unanswered:
+            self.show_results()
+            return
+        q= unanswered[0]
+        self.current_question_data = q
+        self.display_question(q)
+        self.update_status()
+
+   
+    def load_questions(self):
+        #Load questions based on the category user selects
+        filename = f"questions/{self.current_category}.json"
+        with open(filename, "r", encoding="utf-8") as file:
+            self.questions = json.load(file)    
+
+    def user_interface(self):
+        #Clear main menu window
+        for widget in self.root.winfo_children():
+            if not isinstance(widget, tk.Label) or not hasattr(widget, 'image'):
+                widget.destroy()
+
+        #Main quiz frame
+        self.quiz_frame = tk.Frame(self.root, bg='light blue', padx=20, pady=20)
+        self.quiz_frame.place(relx=0.5, rely=0.5, anchor='center')
+        
+        # Question text placeholder
+        self.question_label = tk.Label(self.quiz_frame,text="", font=("Arial", 12), wraplength=400, justify="left", bg='white')
+        self.question_label.pack(pady=(0, 20))
+
+        #Answer options frame
+        self.options_frame = tk.Frame(self.quiz_frame, bg='white', padx=10, pady=10)
+        self.options_frame.pack(pady=(10,20))
+
+        self.answer_var = tk.StringVar()
+        self.option_buttons = []
+        for _ in range(4):
+            btn = tk.Radiobutton(self.options_frame,text="", variable=self.answer_var, value="", font=("Calibri", 10), bg='green', anchor='w', wraplength=380)
+            btn.pack(anchor='w', pady=2)
+            self.option_buttons.append(btn)
+            
+        #Score   
+        self.score_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 10, "bold"))
+        self.score_label.pack()
+        
+        #Timer
+        self.timer_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 12, "bold"), fg='red')
+        self.timer_label.pack(pady=(0, 10))
+        
+        #Answer buttins
+        self.answer_var = tk.StringVar()
+        self.option_buttons = []
+        for _ in range(4):
+            btn = tk.Radiobutton(self.options_frame, text="", variable=self.answer_var, value="", font=("Arial", 10), wraplength=400, bg='white', anchor='w')
+            btn.pack(anchor='w', pady=2)
+            self.option_buttons.append(btn)
+
+        #Control buttons frame
+        buttons_frame = tk.Frame(self.quiz_frame, bg='white')
+        buttons_frame.pack(pady=(10, 0))
+        
+        #First row of buttons
+        top_buttons = tk.Frame(buttons_frame, bg='white')
+        top_buttons.pack(pady=(0, 5))
+        
+        self.submit_button = tk.Button(top_buttons, text="Submit Answer", command=self.check_answer, bg='blue', fg='white', font=("Calibri", 10, "bold"), width=12)
+        self.submit_button.pack(side='left', padx=(0, 5))
+        
+        self.next_button = tk.Button(top_buttons, text="Next Question", command=self.next_question, bg='orange', fg='white', font=("Merriweather", 10, "bold"), width=12)
+        self.next_button.pack(side='left', padx=5)
+        
+        # Second row of buttons
+        bottom_buttons = tk.Frame(buttons_frame, bg='white')
+        bottom_buttons.pack()
+        
+        self.skip_button = tk.Button(bottom_buttons, text="Skip Question", command=self.skip_question, bg='yellow', fg='black', font=("Arial", 10, "bold"), width=12)
+        self.skip_button.pack(side='left', padx=(0, 5))
+        
+        self.retry_button = tk.Button(bottom_buttons, text="Retry Quiz", command=self.retry_quiz, bg='red', fg='white', font=("Arial", 10, "bold"), width=12)
+        self.retry_button.pack(side='left', padx=5)
+        
+        # Progress and score
+        self.progress_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 10))
+        self.progress_label.pack()
+
+        #Status 
+        self.status_label = tk.Label (self.quiz_frame, text="", font=("Arial",10), bg="white")
+        self.status_label.pack(pady=(10, 0))
+        self.score_label = tk.Label(self.quiz_frame, text="", bg='white', font=("Arial", 10, "bold"))
+        self.score_label.pack()
+
+#Displaying the questions and options
+    def display_question(self, question):
+        self.reset_selection()
+        self.show_question_text(question["question"])
+        self.show_options(question["options"])
+        self.question_label.config(text=question["question"])
+
+    def show_options(self, options):
+        for i in range(len(options)):
+         self.option_buttons[i].config(text=options[i], value=options[i]) 
+    
+    def update_status(self):
+    #Update status label with user's current score and question stats
+        status = f"Score: {self.score} | Attempted: {len(self.attempted_questions)} | Skipped: {len(self.skipped_questions)}"
+        self.status_label.config(text=status)
+
+    def check_answer(self):
+        #Check if the user has selected an answer
+        selected = self.answer_var.get()
+        if not selected:
+            messagebox.showwarning("Error! No answer selected", "Please select an answer!")
+            return
+
+        if selected == self.current_question_data["answer"]:
+            self.score += 1
+
+        self.attempted_questions.append(self.current_question)
+        self.next_question()
+
+    def skip_question(self):
+        self.skipped_questions.append(self.current_question_data)
+        self.next_question()
+
+    def retry_quiz(self):
+        if messagebox.askyesno("Reset", "Are you sure you want to reset the quiz?"):
+            self.start_quiz()
+
+    def show_results(self):
+        correct = self.score
+        wrong = len(self.attempted_questions) - correct
+        skipped = len(self.skipped_questions)
+        total = len(self.questions)
+        return correct, wrong, skipped, total
+    
+        
+    def run_quiz(self):
+        """To run the quiz"""
+        self.background_image()
+        self.main_menu()
+        self.root.mainloop()
+
+# To run the application
+if __name__ == "__main__":
+    #Show instructions before starting the quiz
+    show_instructions()
+    app = QuizApp()
+    app.run_quiz()
+
+    
