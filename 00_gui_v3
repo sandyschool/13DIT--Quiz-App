@@ -86,3 +86,8 @@ class QuizApp:
         filename = f"questions/{self.current_category}.json"
         with open(filename, "r", encoding="utf-8") as file:
             self.questions = json.load(file)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TriviaQuiz(root)
+    root.mainloop()
